@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gimnasio - Página del Asesor</title>
+    <style>
+        /* El CSS permanece igual que en la versión anterior */
+        body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); }
+        h1 { color: #4CAF50; text-align: center; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 20px; }
+        form { background-color: #e8f5e9; padding: 15px; border-radius: 5px; border: 1px solid #4CAF50; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #45a049; }
+        ul#listaUsuarios li { background-color: #fff; margin: 5px 0; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        #planes div { background-color: #e8f5e9; padding: 15px; margin: 10px 0; border-radius: 5px; border: 1px solid #4CAF50; }
+        .filtros { display: flex; gap: 10px; margin-bottom: 10px; }
+        .filtros input, .filtros select { flex: 1; }
+        @media (max-width: 600px) { .container { padding: 10px; } h1 { font-size: 24px; } h2 { font-size: 20px; } .filtros { flex-direction: column; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Página del Asesor</h1>
+        
+        <h2>Registrar Usuario</h2>
+        <form id="registroForm">
+            <input type="text" id="nombre" placeholder="Nombre del usuario" required>
+            <input type="email" id="email" placeholder="Email del usuario" required>
+            <select id="plan" required>
+                <option value="Básico">Plan Básico </option>
+                <option value="Intermedio">Plan Intermedio </option>
+                <option value="Premium">Plan Premium </option>
+            </select>
+            <button type="submit">Registrar Usuario</button>
+        </form>
+        
+        <h2>Lista de Usuarios Registrados</h2>
+        <div class="filtros">
+            <input type="text" id="buscador" placeholder="Buscar por nombre o email...">
+            <select id="filtroPlan">
+                <option value="">Todos los planes</option>
+                <option value="Básico">Plan Básico</option>
+                <option value="Intermedio">Plan Intermedio</option>
+                <option value="Premium">Plan Premium</option>
+            </select>
+        </div>
+        <ul id="listaUsuarios"></ul>
+        
+        <h2>Editar Planes</h2>
+        <div id="planes"></div>
+    </div>
+    
+    <script>
+        function cargarUsuarios(filtroTexto = '', filtroPlan = '') {
+            const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+            const lista = document.getElementById('listaUsuarios');
+            lista.innerHTML = '';
+            usuarios.forEach((user, index) => {
+                // Filtrar por texto (nombre o email) y por plan
+                const coincideTexto = filtroTexto === '' || user.nombre.toLowerCase().includes(filtroTexto.toLowerCase()) || user.email.toLowerCase().includes(filtroTexto.toLowerCase());
+                const coincidePlan = filtroPlan === '' || user.plan === filtroPlan;
+                if (coincideTexto && coincidePlan) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `${user.nombre} - ${user.email} - ${user.plan} <button onclick="editarPlan(${index})">Editar Plan</button> <button onclick="eliminarUsuario(${index})">Eliminar</button>`;
+                    lista.appendChild(li);
+                }
+            });
+        }
+        
+        document.getElementById('registroForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+            const plan = document.getElementById('plan').value;
+            
+            const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+            usuarios.push({ nombre, email, plan });
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));
+            
+            cargarUsuarios(); // Recargar sin filtros
+            alert('Usuario registrado exitosamente!');
+            document.getElementById('nombre').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('plan').value = 'Básico';
+        });
+        
+        function editarPlan(index) {
+            const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+            const nuevoPlan = prompt('Selecciona el nuevo plan (Básico, Intermedio, Premium):', usuarios[index].plan);
+            if (nuevoPlan && ['Básico', 'Intermedio', 'Premium'].includes(nuevoPlan)) {
+                usuarios[index].plan = nuevoPlan;
+                localStorage.setItem('usuarios', JSON.stringify(usuarios));
+                cargarUsuarios(); // Recargar la lista
+                alert('Plan actualizado exitosamente!');
+            } else if (nuevoPlan) {
+                alert('Plan no válido. Debe ser Básico, Intermedio o Premium.');
+            }
+        }
+        
+        function eliminarUsuario(index) {
+            let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+            usuarios.splice(index, 1);  // Eliminar el usuario en el índice especificado
+            localStorage.setItem('usuarios', JSON.stringify(usuarios));  // Actualizar localStorage
+            cargarUsuarios();  // Recargar la lista
+            alert('Usuario eliminado exitosamente!');
+        }
+        
+        function cargarPlanes() {
+            let planes = JSON.parse(localStorage.getItem('planes')) || [
+                { nombre: 'Básico', precio: 100, activo: true },
+                { nombre: 'Intermedio', precio: 150, activo: true },
+                { nombre: 'Premium', precio: 200, activo: true }
+            ];
+            localStorage.setItem('planes', JSON.stringify(planes));
+            
+            const divPlanes = document.getElementById('planes');
+            divPlanes.innerHTML = '';
+            planes.forEach((plan, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <h3>${plan.nombre}</h3>
+                    <input type="number" id="precio${index}" value="${plan.precio}" placeholder="Precio" required>
+                    <label><input type="checkbox" id="activo${index}" ${plan.activo ? 'checked' : ''}> Activo</label>
+                    <button onclick="guardarPlan(${index})">Guardar Cambios</button>
+                `;
+                divPlanes.appendChild(div);
+            });
+        }
+        
+        function guardarPlan(index) {
+            const planes = JSON.parse(localStorage.getItem('planes')) || [];
+            const precioInput = document.getElementById(`precio${index}`);
+            const activoInput = document.getElementById(`activo${index}`);
+            
+            planes[index].precio = parseFloat(precioInput.value);
+            planes[index].activo = activoInput.checked;
+            
+            localStorage.setItem('planes', JSON.stringify(planes));
+            alert('Plan actualizado exitosamente!');
+        }
+        
+        window.onload = function() {
+            cargarUsuarios();
+            cargarPlanes();
+            
+            // Event listeners para los filtros
+            document.getElementById('buscador').addEventListener('input', function() {
+                const filtroTexto = this.value;
+                const filtroPlan = document.getElementById('filtroPlan').value;
+                cargarUsuarios(filtroTexto, filtroPlan);
+            });
+            
+            document.getElementById('filtroPlan').addEventListener('change', function() {
+                const filtroTexto = document.getElementById('buscador').value;
+                const filtroPlan = this.value;
+                cargarUsuarios(filtroTexto, filtroPlan);
+            });
+        };
+    </script>
+</body>
+</html>
